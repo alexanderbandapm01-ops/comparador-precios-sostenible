@@ -1,21 +1,79 @@
-/* CDPS — verde pastel y azul pastel, como el logo */
-:root { --verde: #7fb069; --verde-claro: #e6f2e3; --azul: #a8c8e8; --azul-claro: #eaf2fb;
-        --texto: #1e2b22; --borde: #c9d8c5; }
+/* CDPS — paleta tomada del logo: fondo claro, hoja verde, tinta oscura.
+   Un solo verde, un solo acento, sin degradados ni colores de más. */
+:root {
+  --fondo: #edf3ea;        /* fondo del logo */
+  --superficie: #ffffff;
+  --tinta: #10231a;        /* letras CDPS del logo */
+  --verde: #5a9e64;        /* hoja */
+  --verde-oscuro: #2f5233; /* contorno de la hoja */
+  --verde-suave: #e3eee1;  /* verde apagado para resaltar sin gritar */
+  --borde: #c7d5c7;
+  --apagado: #5c6b5e;      /* texto secundario */
+  --acento: #7fa3c8;       /* líneas del logo, solo para enlaces */
+}
 * { box-sizing: border-box; }
-body { margin: 0; font-family: system-ui, Arial, sans-serif; color: var(--texto); background: #f7faf5; }
-header { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; padding: 1rem 1.5rem;
-         background: linear-gradient(90deg, var(--verde-claro), var(--azul-claro)); border-bottom: 2px solid var(--verde); }
-.logo { height: 72px; }
-h1 { font-size: 1.4rem; margin: 0; }
-h2 { font-size: 1.1rem; margin-top: 0; }
-main { max-width: 960px; margin: 0 auto; padding: 1rem; display: grid; gap: 1rem; }
-.card { background: #fff; border: 1px solid var(--borde); border-radius: 12px; padding: 1rem 1.2rem; }
-button { background: var(--verde); color: #fff; border: none; border-radius: 8px; padding: .5rem .9rem; cursor: pointer; margin: .2rem; }
-button:hover { filter: brightness(.92); }
-input, select { padding: .5rem; border: 1px solid var(--borde); border-radius: 8px; margin: .2rem; }
-#mapa { height: 320px; border-radius: 12px; border: 1px solid var(--borde); margin: .5rem 0; }
-.producto, .sucursal, .item { border: 1px solid var(--borde); border-radius: 8px; padding: .6rem; margin: .4rem 0; }
-.aviso { background: #fff8e1; border: 1px solid #ffe082; border-radius: 8px; padding: .5rem; margin: .4rem 0; }
-.recomendada { background: var(--verde-claro); border: 2px solid var(--verde); border-radius: 10px; padding: .8rem; }
-footer { text-align: center; color: #666; font-size: .85rem; padding: 1rem; }
-@media (max-width: 600px) { header { padding: .8rem; } .logo { height: 56px; } }
+body { margin: 0; font-family: system-ui, Arial, sans-serif; color: var(--tinta);
+       background: var(--fondo); line-height: 1.5; }
+header { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;
+         padding: 1.25rem 1.5rem; background: var(--superficie);
+         border-bottom: 1px solid var(--borde); }
+.logo { height: 64px; }
+h1 { font-size: 1.25rem; margin: 0; font-weight: 600; letter-spacing: -.01em; }
+header p { margin: .15rem 0 0; color: var(--apagado); font-size: .9rem; }
+#auth-box { margin-left: auto; display: flex; gap: .5rem; align-items: center; }
+#auth-estado { color: var(--apagado); font-size: .9rem; }
+main { max-width: 720px; margin: 0 auto; padding: 1.5rem 1rem 2rem; display: grid; gap: 1rem; }
+
+/* Pantallas grandes (laptop 14" en adelante): se aprovecha el ancho con dos
+   columnas en vez de dejar huecos a las orillas. La columna de la lista queda
+   fija a la derecha mientras se baja por la pagina. */
+@media (min-width: 900px) {
+  main { max-width: min(1180px, 94vw); grid-template-columns: 1fr 1fr; align-items: start; }
+  main .card:nth-child(4) { grid-column: 2; grid-row: 1 / span 3; position: sticky; top: 1rem; }
+  /* En la columna de la lista cada control va en su linea para que nada se corte */
+  main .card:nth-child(4) label { display: block; margin: .45rem 0; }
+  main .card:nth-child(4) label select,
+  main .card:nth-child(4) label input { width: 100%; margin: .2rem 0 0; }
+}
+@media (min-width: 1600px) {
+  main { max-width: min(1440px, 92vw); }
+  #mapa { height: 380px; }
+}
+.card { background: var(--superficie); border: 1px solid var(--borde);
+        border-radius: 8px; padding: 1.1rem 1.2rem; }
+h2 { font-size: .8rem; margin: 0 0 .7rem; font-weight: 600;
+     letter-spacing: .08em; text-transform: uppercase; color: var(--verde-oscuro); }
+p { margin: .3rem 0 .6rem; }
+button { background: var(--verde-oscuro); color: #fff; border: none; border-radius: 6px;
+         padding: .5rem .9rem; cursor: pointer; margin: .2rem .2rem .2rem 0; font-size: .95rem; }
+button:hover { background: var(--tinta); }
+#btn-salir, #btn-cp { background: transparent; color: var(--verde-oscuro);
+                     border: 1px solid var(--borde); }
+#btn-salir:hover, #btn-cp:hover { border-color: var(--verde-oscuro); background: transparent; }
+input, select { padding: .5rem .6rem; border: 1px solid var(--borde); border-radius: 6px;
+                margin: .2rem .2rem .2rem 0; font-size: .95rem; background: var(--superficie); color: var(--tinta); }
+input:focus, select:focus, button:focus { outline: 2px solid var(--acento); outline-offset: 1px; }
+#mapa { height: 300px; border-radius: 8px; border: 1px solid var(--borde); margin: .5rem 0; }
+.producto, .sucursal, .item { border-top: 1px solid var(--borde); padding: .6rem 0; margin: 0; }
+.producto:first-child, .sucursal:first-child, .item:first-child { border-top: none; }
+.producto button, .sucursal button, .item button { background: transparent; color: var(--verde-oscuro);
+  border: 1px solid var(--borde); padding: .35rem .6rem; font-size: .9rem; }
+.aviso { color: var(--apagado); font-size: .9rem; padding: .4rem 0; }
+.recomendada { background: var(--verde-suave); border-radius: 8px; padding: .9rem 1rem; }
+.recomendada h3 { margin: 0 0 .3rem; font-size: 1.05rem; }
+footer { text-align: center; color: var(--apagado); font-size: .85rem; padding: 1rem; }
+dialog { border: 1px solid var(--borde); border-radius: 8px; padding: 1.2rem; max-width: 420px; }
+dialog h3 { margin-top: 0; }
+dialog input, dialog select { display: block; width: 100%; margin: .4rem 0; }
+#auth-error { color: #8a3b2e; font-size: .9rem; }
+@media (max-width: 600px) {
+  header { padding: 1rem; gap: .6rem; }
+  .logo { height: 48px; }
+  h1 { font-size: 1.1rem; }
+  #auth-box { margin-left: 0; width: 100%; justify-content: space-between; }
+  #auth-box button { flex: 1; }
+  main { padding: 1rem .75rem 1.5rem; }
+  input, select { width: 100%; margin: .25rem 0; }
+  button { padding: .55rem .9rem; }
+  #mapa { height: 240px; }
+}

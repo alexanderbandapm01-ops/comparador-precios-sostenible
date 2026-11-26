@@ -12,7 +12,7 @@
   <img src="../docs/logo-cdps.png" alt="CDPS" class="logo" onerror="this.style.display='none'">
   <div>
     <h1>CDPS · Comparador de Precios Sostenible</h1>
-    <p>Datos · Mapas · Querétaro — Precios PROFECO (QQP) y huella de carbono estimada. ODS 12.</p>
+    <p>Precios PROFECO · Querétaro</p>
   </div>
   <div id="auth-box">
     <span id="auth-estado">Sin sesión</span>
@@ -23,16 +23,15 @@
 
 <main>
   <section class="card">
-    <h2>1 · Tu ubicación</h2>
-    <p>La recomendación usa tu ubicación para medir la distancia en línea recta a cada sucursal.</p>
+    <h2>Tu ubicación</h2>
     <button id="btn-ubicacion">Usar mi ubicación</button>
-    <span id="ubicacion-texto">Aún no definida. También puedes escribir un código postal.</span>
+    <span id="ubicacion-texto">O escribe un código postal.</span>
     <input id="input-cp" placeholder="Código postal (ej. 76000)" maxlength="5">
     <button id="btn-cp">Usar CP</button>
   </section>
 
   <section class="card">
-    <h2>2 · Buscar productos</h2>
+    <h2>Buscar productos</h2>
     <input id="input-q" placeholder="Ej. arroz, aceite, huevo…">
     <select id="select-categoria"><option value="">Todas las categorías</option></select>
     <button id="btn-buscar">Buscar</button>
@@ -41,17 +40,15 @@
   </section>
 
   <section class="card">
-    <h2>3 · Sucursales cercanas</h2>
+    <h2>Sucursales cercanas</h2>
     <div id="mapa"></div>
     <button id="btn-cercanas">Ver sucursales en el mapa</button>
     <ul id="lista-cercanas"></ul>
   </section>
 
   <section class="card">
-    <h2>4 · Mi lista y recomendación</h2>
-    <p><strong>Una sucursal por lista:</strong> la API recomienda la tienda donde conviene
-    comprar toda la lista (la que cubre más productos y gana por ahorro, huella o balance).
-    Debajo verás las otras sucursales comparadas.</p>
+    <h2>Mi lista y recomendación</h2>
+    <p>Te recomienda una sucursal para comprar toda la lista.</p>
     <input id="input-lista" placeholder="Nombre de la lista (ej. Despensa)">
     <button id="btn-crear-lista">Crear lista</button>
     <select id="select-lista"></select>
@@ -98,7 +95,7 @@
   </dialog>
 </main>
 
-<footer>CDPS · Datos: PROFECO, Quién es Quién en los Precios (ene–feb 2026). La huella es una estimación y se avisa cuando es parcial. Distancia en línea recta.</footer>
+<footer>CDPS · Datos: PROFECO, Quién es Quién en los Precios (ene–feb 2026).</footer>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="app.js"></script>
 </body>
