@@ -24,21 +24,50 @@ header p { margin: .15rem 0 0; color: var(--apagado); font-size: .9rem; }
 #auth-estado { color: var(--apagado); font-size: .9rem; }
 main { max-width: 720px; margin: 0 auto; padding: 1.5rem 1rem 2rem; display: grid; gap: 1rem; }
 
-/* Pantallas grandes (laptop 14" en adelante): se aprovecha el ancho con dos
-   columnas en vez de dejar huecos a las orillas. La columna de la lista queda
-   fija a la derecha mientras se baja por la pagina. */
+/* Vistas (Buscar / Mi lista / Mapa): una sola visible a la vez. */
+[hidden] { display: none !important; }
+#nav-vistas { display: flex; gap: .4rem; margin-left: auto; flex-wrap: wrap; }
+#nav-vistas button { background: transparent; color: var(--verde-oscuro);
+  border: 1px solid var(--borde); margin: 0; }
+#nav-vistas button.nav-activa { background: var(--verde-oscuro); color: #fff; border-color: var(--verde-oscuro); }
+#badge-lista { background: var(--verde); color: #fff; border-radius: 999px;
+  padding: 0 .4rem; font-size: .8rem; margin-left: .2rem; }
+#auth-box { margin-left: 0; }
+
+/* Pantallas grandes: la vista de buscar usa dos columnas; lista y mapa,
+   a todo lo ancho porque ya son su propia sección. */
 @media (min-width: 900px) {
-  main { max-width: min(1180px, 94vw); grid-template-columns: 1fr 1fr; align-items: start; }
-  main .card:nth-child(4) { grid-column: 2; grid-row: 1 / span 3; position: sticky; top: 1rem; }
-  /* En la columna de la lista cada control va en su linea para que nada se corte */
-  main .card:nth-child(4) label { display: block; margin: .45rem 0; }
-  main .card:nth-child(4) label select,
-  main .card:nth-child(4) label input { width: 100%; margin: .2rem 0 0; }
+  main { max-width: min(1180px, 94vw); }
+  #vista-buscar { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; align-items: start; }
+  #vista-lista .card, #vista-mapa .card { grid-column: 1 / -1; }
+  #vista-mapa #mapa { height: 420px; }
 }
 @media (min-width: 1600px) {
   main { max-width: min(1440px, 92vw); }
-  #mapa { height: 380px; }
 }
+
+/* Puerta de entrada: el fondo se pone borroso para focalizar el diálogo. */
+dialog::backdrop { background: rgba(16, 35, 26, .45); backdrop-filter: blur(8px); }
+#dlg-bienvenida, #dlg-onboarding { max-width: 460px; width: calc(100% - 2rem); }
+#dlg-bienvenida button, #dlg-onboarding button { width: 100%; margin: .3rem 0; }
+#dlg-bienvenida .secundario, #dlg-onboarding .secundario,
+#btn-lista-login, #btn-ir-buscar { background: transparent; color: var(--verde-oscuro);
+  border: 1px solid var(--borde); }
+.centrado { text-align: center; }
+.nota { color: var(--apagado); font-size: .85rem; }
+.acciones-dialogo { display: flex; gap: .5rem; margin-top: .8rem; }
+
+/* Atajos de categorías (chips) */
+.chip { background: var(--superficie); color: var(--verde-oscuro); border: 1px solid var(--borde);
+  border-radius: 999px; padding: .35rem .8rem; font-size: .9rem; margin: .15rem .15rem .15rem 0; }
+.chip-activo, .chip:hover { background: var(--verde-oscuro); color: #fff; border-color: var(--verde-oscuro); }
+#chips-categorias, #chips-onboarding { margin-bottom: .6rem; }
+
+/* Resumen de impacto */
+.impacto { background: var(--verde-suave); border-left: 4px solid var(--verde);
+  border-radius: 8px; padding: .9rem 1rem; margin-top: 1rem; }
+.impacto h3 { margin: 0 0 .4rem; font-size: 1.05rem; }
+.impacto p { margin: .45rem 0; }
 .card { background: var(--superficie); border: 1px solid var(--borde);
         border-radius: 8px; padding: 1.1rem 1.2rem; }
 h2 { font-size: .8rem; margin: 0 0 .7rem; font-weight: 600;

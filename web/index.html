@@ -14,6 +14,11 @@
     <h1>CDPS · Comparador de Precios Sostenible</h1>
     <p>Precios PROFECO · Querétaro</p>
   </div>
+  <nav id="nav-vistas">
+    <button data-vista="buscar" class="nav-activa">Buscar</button>
+    <button data-vista="lista">Mi lista <span id="badge-lista" hidden>0</span></button>
+    <button data-vista="mapa">Mapa</button>
+  </nav>
   <div id="auth-box">
     <span id="auth-estado">Sin sesión</span>
     <button id="btn-login">Entrar / Registrarme</button>
@@ -22,82 +27,135 @@
 </header>
 
 <main>
-  <section class="card">
-    <h2>Tu ubicación</h2>
-    <button id="btn-ubicacion">Usar mi ubicación</button>
-    <span id="ubicacion-texto">O escribe un código postal.</span>
-    <input id="input-cp" placeholder="Código postal (ej. 76000)" maxlength="5">
-    <button id="btn-cp">Usar CP</button>
-  </section>
+  <!-- Vista: buscar -->
+  <div class="vista" id="vista-buscar">
+    <section class="card">
+      <h2>Tu ubicación</h2>
+      <button id="btn-ubicacion">Usar mi ubicación</button>
+      <span id="ubicacion-texto">O escribe un código postal.</span>
+      <input id="input-cp" placeholder="Código postal (ej. 76000)" maxlength="5">
+      <button id="btn-cp">Usar CP</button>
+    </section>
 
-  <section class="card">
-    <h2>Buscar productos</h2>
-    <input id="input-q" placeholder="Ej. arroz, aceite, huevo…">
-    <select id="select-categoria"><option value="">Todas las categorías</option></select>
-    <button id="btn-buscar">Buscar</button>
-    <div id="resultados"></div>
-    <div id="detalle"></div>
-  </section>
+    <section class="card">
+      <h2>Buscar productos</h2>
+      <div id="chips-categorias"></div>
+      <input id="input-q" placeholder="Ej. arroz, aceite, huevo…">
+      <select id="select-categoria"><option value="">Todas las categorías</option></select>
+      <button id="btn-buscar">Buscar</button>
+      <div id="resultados"></div>
+      <div id="detalle"></div>
+    </section>
+  </div>
 
-  <section class="card">
-    <h2>Sucursales cercanas</h2>
-    <div id="mapa"></div>
-    <button id="btn-cercanas">Ver sucursales en el mapa</button>
-    <ul id="lista-cercanas"></ul>
-  </section>
+  <!-- Vista: mi lista / carrito completo -->
+  <div class="vista" id="vista-lista" hidden>
+    <section class="card">
+      <h2>Mi lista y recomendación</h2>
+      <p>Te recomienda una sucursal para comprar toda la lista.</p>
+      <div id="lista-solo-cuenta" hidden>
+        <p>Para guardar listas y recibir la recomendación necesitas una cuenta.
+        Puedes seguir consultando precios sin registrarte.</p>
+        <button id="btn-lista-login">Entrar / Registrarme</button>
+      </div>
+      <div id="lista-contenido">
+        <input id="input-lista" placeholder="Nombre de la lista (ej. Despensa)">
+        <button id="btn-crear-lista">Crear lista</button>
+        <select id="select-lista"></select>
+        <div id="items-lista"></div>
+        <button id="btn-ir-buscar">+ Agregar más productos</button>
+        <label>Modo
+          <select id="select-modo">
+            <option value="balance">Balance (50% costo · 50% huella)</option>
+            <option value="ahorro">Ahorro</option>
+            <option value="ecologico">Ecológico</option>
+          </select>
+        </label>
+        <label>Transporte <select id="select-transporte"></select></label>
+        <label>Radio (km) <input id="input-radio" type="number" value="5" min="1" max="100"></label>
+        <button id="btn-recomendar">Recomendar dónde comprar</button>
+        <div id="recomendacion"></div>
+        <div id="impacto"></div>
+      </div>
+    </section>
+  </div>
 
-  <section class="card">
-    <h2>Mi lista y recomendación</h2>
-    <p>Te recomienda una sucursal para comprar toda la lista.</p>
-    <input id="input-lista" placeholder="Nombre de la lista (ej. Despensa)">
-    <button id="btn-crear-lista">Crear lista</button>
-    <select id="select-lista"></select>
-    <div id="items-lista"></div>
-    <label>Modo
-      <select id="select-modo">
-        <option value="balance">Balance (50% costo · 50% huella)</option>
-        <option value="ahorro">Ahorro</option>
-        <option value="ecologico">Ecológico</option>
-      </select>
-    </label>
-    <label>Transporte <select id="select-transporte"></select></label>
-    <label>Radio (km) <input id="input-radio" type="number" value="5" min="1" max="100"></label>
-    <button id="btn-recomendar">Recomendar dónde comprar</button>
-    <div id="recomendacion"></div>
-  </section>
-
-  <dialog id="dlg-auth">
-    <form id="form-auth">
-      <h3>Entrar o registrarme</h3>
-      <p>Entra con tu cuenta de Google o crea una cuenta con correo y contraseña.</p>
-      <input name="nombre" placeholder="Nombre">
-      <input name="apellido_paterno" placeholder="Apellido paterno">
-      <input name="apellido_materno" placeholder="Apellido materno (opcional)">
-      <input name="email" type="email" placeholder="correo@ejemplo.mx" required>
-      <input name="contrasena" type="password" placeholder="Contraseña (mín. 8)" required minlength="8">
-      <label>Estado
-        <select name="id_estado" id="select-estado" required>
-          <option value="">Cargando estados…</option>
-        </select>
-      </label>
-      <label>Municipio
-        <select name="id_municipio" id="select-municipio" required>
-          <option value="">Elige un estado primero</option>
-        </select>
-      </label>
-      <input name="fecha_nacimiento" type="date" value="2000-06-15" required>
-      <p>Si ya diste tu ubicación arriba, se guarda con tu cuenta.</p>
-      <button type="button" value="registro">Registrarme</button>
-      <button type="button" value="login">Ya tengo cuenta: entrar</button>
-      <button type="button" value="cancelar">Cancelar</button>
-      <hr>
-      <div id="google-btn"></div>
-      <p id="auth-error"></p>
-    </form>
-  </dialog>
+  <!-- Vista: mapa -->
+  <div class="vista" id="vista-mapa" hidden>
+    <section class="card">
+      <h2>Sucursales cercanas</h2>
+      <div id="mapa"></div>
+      <button id="btn-cercanas">Ver sucursales en el mapa</button>
+      <p id="mapa-mensaje"></p>
+      <ul id="lista-cercanas"></ul>
+    </section>
+  </div>
 </main>
 
-<footer>CDPS · Datos: PROFECO, Quién es Quién en los Precios (ene–feb 2026).</footer>
+<!-- Puerta de entrada al cargar la página -->
+<dialog id="dlg-bienvenida">
+  <h3>Bienvenido a CDPS</h3>
+  <p>Compara precios de la despensa en Querétaro y elige la tienda con mejor
+  precio y menor huella de carbono.</p>
+  <div id="google-btn-bienvenida"></div>
+  <p class="centrado">o con correo y contraseña:</p>
+  <button id="btn-gate-correo">Entrar / Registrarme con correo</button>
+  <hr>
+  <button id="btn-invitado" class="secundario">Consultar sin registrarse</button>
+  <p class="nota">Puedes consultar precios sin cuenta. Para guardar listas y
+  recibir recomendaciones necesitas registrarte.</p>
+</dialog>
+
+<!-- Onboarding: qué sueles comprar + ubicación -->
+<dialog id="dlg-onboarding">
+  <h3>¿Qué sueles comprar?</h3>
+  <p>Elige tus categorías habituales: te saldrán como atajos al buscar.</p>
+  <div id="chips-onboarding"></div>
+  <h3>¿Dónde compras?</h3>
+  <p>Tu ubicación sirve para buscar las sucursales cercanas y calcular el traslado.</p>
+  <button id="btn-onb-ubicacion">Usar mi ubicación</button>
+  <span id="onb-ubicacion-texto">O escribe un código postal.</span>
+  <input id="input-onb-cp" placeholder="Código postal (ej. 76000)" maxlength="5">
+  <button id="btn-onb-cp">Usar CP</button>
+  <div class="acciones-dialogo">
+    <button id="btn-onb-continuar">Continuar</button>
+    <button id="btn-onb-saltar" class="secundario">Saltar</button>
+  </div>
+</dialog>
+
+<dialog id="dlg-auth">
+  <form id="form-auth">
+    <h3>Entrar o registrarme</h3>
+    <p>Entra con tu cuenta de Google o crea una cuenta con correo y contraseña.</p>
+    <input name="nombre" placeholder="Nombre">
+    <input name="apellido_paterno" placeholder="Apellido paterno">
+    <input name="apellido_materno" placeholder="Apellido materno (opcional)">
+    <input name="email" type="email" placeholder="correo@ejemplo.mx" required>
+    <input name="contrasena" type="password" placeholder="Contraseña (mín. 8)" required minlength="8">
+    <label>Estado
+      <select name="id_estado" id="select-estado" required>
+        <option value="">Cargando estados…</option>
+      </select>
+    </label>
+    <label>Municipio
+      <select name="id_municipio" id="select-municipio" required>
+        <option value="">Elige un estado primero</option>
+      </select>
+    </label>
+    <input name="fecha_nacimiento" type="date" value="2000-06-15" required>
+    <p>Si ya diste tu ubicación arriba, se guarda con tu cuenta.</p>
+    <button type="button" value="registro">Registrarme</button>
+    <button type="button" value="login">Ya tengo cuenta: entrar</button>
+    <button type="button" value="cancelar">Cancelar</button>
+    <hr>
+    <div id="google-btn"></div>
+    <p id="auth-error"></p>
+  </form>
+</dialog>
+
+<footer>CDPS · Datos: PROFECO, Quién es Quién en los Precios (ene–feb 2026).
+Huella estimada con factores de Poore &amp; Nemecek (2018) vía Our World in Data
+y DEFRA 2023: son promedios globales, no mediciones de cada producto.</footer>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="app.js"></script>
 </body>
