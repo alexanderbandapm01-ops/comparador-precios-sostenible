@@ -70,18 +70,29 @@
   </section>
 
   <dialog id="dlg-auth">
-    <form method="dialog" id="form-auth">
+    <form id="form-auth">
       <h3>Entrar o registrarme</h3>
       <p>Las cuentas son ficticias: usa un correo de prueba.</p>
       <input name="nombre" placeholder="Nombre">
       <input name="apellido_paterno" placeholder="Apellido paterno">
+      <input name="apellido_materno" placeholder="Apellido materno (opcional)">
       <input name="email" type="email" placeholder="correo@ejemplo.mx" required>
       <input name="contrasena" type="password" placeholder="Contraseña (mín. 8)" required minlength="8">
-      <input name="id_municipio" type="number" placeholder="ID municipio (ej. 1)" required>
+      <label>Estado
+        <select name="id_estado" id="select-estado" required>
+          <option value="">Cargando estados…</option>
+        </select>
+      </label>
+      <label>Municipio
+        <select name="id_municipio" id="select-municipio" required>
+          <option value="">Elige un estado primero</option>
+        </select>
+      </label>
       <input name="fecha_nacimiento" type="date" value="2000-06-15" required>
-      <button value="registro">Registrarme</button>
-      <button value="login">Ya tengo cuenta: entrar</button>
-      <button value="cancelar">Cancelar</button>
+      <p>Si ya diste tu ubicación arriba, se guarda con tu cuenta.</p>
+      <button type="button" value="registro">Registrarme</button>
+      <button type="button" value="login">Ya tengo cuenta: entrar</button>
+      <button type="button" value="cancelar">Cancelar</button>
       <p id="auth-error"></p>
     </form>
   </dialog>

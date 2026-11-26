@@ -18,22 +18,66 @@ async function api(path, opts = {}) {
 }
 const dinero = (n) => (n == null ? "—" : "$" + Number(n).toFixed(2));
 
+async function cargarYo() {
+  if (!token) return;
+  try {
+    const yo = await api("/auth/yo", { headers: headers(false) });
+    $("auth-estado").textContent = `Sesión: ${yo.nombre} ${yo.apellido_paterno || ""}`.trim();
+  } catch { $("auth-estado").textContent = "Sesión iniciada"; }
+}
+
 function refrescarAuth() {
   $("auth-estado").textContent = token ? "Sesión iniciada" : "Sin sesión";
   $("btn-salir").hidden = !token;
+  if (token) cargarYo();
 }
-$("btn-login").onclick = () => $("dlg-auth").showModal();
+
+// Listas de estado y municipio para el registro (la API ya las expone)
+let estadosCargados = false;
+async function cargarEstados() {
+  if (estadosCargados) return;
+  try {
+    const estados = await api("/estados");
+    $("select-estado").innerHTML = `<option value="">Elige tu estado</option>` + estados.map((e) =>
+      `<option value="${e.id_estado}">${e.nombre}</option>`).join("");
+    estadosCargados = true;
+    const qro = estados.find((e) => /quer.taro/i.test(e.nombre));
+    if (qro) { $("select-estado").value = qro.id_estado; await cargarMunicipios(); }
+  } catch { $("select-estado").innerHTML = `<option value="">No se pudieron cargar</option>`; }
+}
+async function cargarMunicipios() {
+  const idEstado = $("select-estado").value;
+  $("select-municipio").innerHTML = `<option value="">Cargando municipios…</option>`;
+  if (!idEstado) { $("select-municipio").innerHTML = `<option value="">Elige un estado primero</option>`; return; }
+  try {
+    const municipios = await api(`/municipios?id_estado=${idEstado}`);
+    $("select-municipio").innerHTML = `<option value="">Elige tu municipio</option>` + municipios.map((m) =>
+      `<option value="${m.id_municipio}">${m.nombre}</option>`).join("");
+    const qro = municipios.find((m) => /quer.taro/i.test(m.nombre));
+    if (qro) $("select-municipio").value = qro.id_municipio;
+  } catch { $("select-municipio").innerHTML = `<option value="">No se pudieron cargar</option>`; }
+}
+$("select-estado").onchange = cargarMunicipios;
+
+$("btn-login").onclick = () => { $("auth-error").textContent = ""; cargarEstados(); $("dlg-auth").showModal(); };
 $("btn-salir").onclick = () => { token = ""; localStorage.removeItem("cdps_token"); refrescarAuth(); };
 $("form-auth").addEventListener("click", async (e) => {
   const accion = e.target.value;
-  if (!accion || accion === "cancelar") return;
+  if (!accion) return;
+  if (accion === "cancelar") { $("dlg-auth").close(); return; }
   const f = new FormData($("form-auth"));
+  if (accion === "registro" && !f.get("id_municipio")) {
+    $("auth-error").textContent = "Error: elige tu estado y tu municipio.";
+    return;
+  }
   try {
     if (accion === "registro") {
-      const r = await api("/auth/registro", { method: "POST", headers: headers(),
-        body: JSON.stringify({ nombre: f.get("nombre") || "Usuario", apellido_paterno: f.get("apellido_paterno") || "Prueba",
-          fecha_nacimiento: f.get("fecha_nacimiento"), email: f.get("email"), contrasena: f.get("contrasena"),
-          id_municipio: Number(f.get("id_municipio")) }) });
+      const cuerpo = { nombre: f.get("nombre") || "Usuario", apellido_paterno: f.get("apellido_paterno") || "Prueba",
+        fecha_nacimiento: f.get("fecha_nacimiento"), email: f.get("email"), contrasena: f.get("contrasena"),
+        id_municipio: Number(f.get("id_municipio")) };
+      if (f.get("apellido_materno")) cuerpo.apellido_materno = f.get("apellido_materno");
+      if (ubic.lat) { cuerpo.latitud = ubic.lat; cuerpo.longitud = ubic.lon; }
+      const r = await api("/auth/registro", { method: "POST", headers: headers(), body: JSON.stringify(cuerpo) });
       token = r.token;
     } else {
       const r = await api("/auth/login", { method: "POST", headers: headers(),
