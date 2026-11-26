@@ -266,3 +266,22 @@ def test_recomendacion(base, usuario):
             cur.execute('DELETE FROM medio_transporte WHERE id_transporte = %s', (id_medio,))
         con.commit()
         con.close()
+
+
+def test_limite_de_intentos_de_login(base):
+    """5 intentos fallidos -> el 6o responde 429; con la clave correcta tampoco entra hasta limpiar."""
+    from api.servicios.limitador import limpiar_todo
+    limpiar_todo()
+    correo, _token, _uid = _registrar(base)
+    for _ in range(5):
+        r = cliente.post('/auth/login', json={'email': correo, 'contrasena': 'clave-incorrecta'})
+        assert r.status_code == 401, r.text
+    r = cliente.post('/auth/login', json={'email': correo, 'contrasena': 'clave-incorrecta'})
+    assert r.status_code == 429, r.text
+    assert 'Retry-After' in r.headers
+    assert 'minutos' in r.json()['detail']
+    bien = cliente.post('/auth/login', json={'email': correo, 'contrasena': 'clave-de-prueba-1'})
+    assert bien.status_code == 429, bien.text
+    limpiar_todo()
+    ok = cliente.post('/auth/login', json={'email': correo, 'contrasena': 'clave-de-prueba-1'})
+    assert ok.status_code == 200 and ok.json()['token']

@@ -2,12 +2,13 @@
 from datetime import date
 
 import pymysql
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 
 from ..db import obtener_db
 from ..esquemas import LoginIn, RegistroIn, UbicacionIn
 from ..seguridad import crear_token, hashear, usuario_actual, verificar
 from ..servicios.geo import validar_coordenadas, wkt_punto
+from ..servicios.limitador import LIMITE_CORREO, LIMITE_IP, ip_cliente, limpiar, registrar_fallo, revisar
 
 router = APIRouter(prefix='/auth', tags=['Autenticacion'])
 
@@ -48,13 +49,21 @@ def registro(datos: RegistroIn, db=Depends(obtener_db)):
 
 
 @router.post('/login')
-def login(datos: LoginIn, db=Depends(obtener_db)):
+def login(datos: LoginIn, peticion: Request, db=Depends(obtener_db)):
+    correo = datos.email.lower()
+    ip = ip_cliente(peticion)
+    revisar(f'correo:{correo}', LIMITE_CORREO)
+    revisar(f'ip:{ip}', LIMITE_IP)
     with db.cursor() as cur:
-        cur.execute('SELECT id_usuario, contrasena_hash FROM usuario WHERE email = %s', (datos.email.lower(),))
+        cur.execute('SELECT id_usuario, contrasena_hash FROM usuario WHERE email = %s', (correo,))
         fila = cur.fetchone()
     correcto = verificar(datos.contrasena, fila['contrasena_hash'] if fila else _HASH_FALSO)
     if not fila or not correcto:
+        registrar_fallo(f'correo:{correo}', LIMITE_CORREO)
+        registrar_fallo(f'ip:{ip}', LIMITE_IP)
         raise HTTPException(401, 'Correo o contrasena incorrectos')
+    limpiar(f'correo:{correo}')
+    limpiar(f'ip:{ip}')
     return {'id_usuario': fila['id_usuario'], 'token': crear_token(fila['id_usuario'])}
 
 

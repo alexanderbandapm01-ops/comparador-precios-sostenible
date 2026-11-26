@@ -13,7 +13,12 @@ const headers = (json = true) => {
 };
 async function api(path, opts = {}) {
   const r = await fetch(API + path, opts);
-  if (!r.ok) throw new Error((await r.text()).slice(0, 300));
+  if (!r.ok) {
+    const texto = (await r.text()).slice(0, 300);
+    let mensaje = texto;
+    try { mensaje = JSON.parse(texto).detail || texto; } catch { /* el mensaje ya es texto */ }
+    throw new Error(mensaje);
+  }
   return r.status === 204 ? null : r.json();
 }
 const dinero = (n) => (n == null ? "—" : "$" + Number(n).toFixed(2));
