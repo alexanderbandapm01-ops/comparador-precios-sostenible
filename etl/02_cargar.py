@@ -36,7 +36,8 @@ NOMBRE_UNIDAD = {"Kg": "Kilogramo", "Gr": "Gramo", "Lt": "Litro",
 def conectar():
     datos = dict(host=os.getenv("DB_HOST", "127.0.0.1"), port=int(os.getenv("DB_PORT", "3306")),
                  user=os.getenv("DB_USER", "root"), database=os.getenv("DB_NAME", "comparador_precios_sostenible"),
-                 charset="utf8mb4", autocommit=False)
+                 charset="utf8mb4", autocommit=False,
+                 cursorclass=pymysql.cursors.DictCursor)  # el resto del script lee filas como diccionarios
     if os.getenv("DB_SOCKET"):
         datos["unix_socket"] = os.getenv("DB_SOCKET")
     clave = os.getenv("DB_PASSWORD")
@@ -145,6 +146,11 @@ def main():
         producto_id[(cat, mar, prod)] = insertar_id(
             "INSERT INTO producto (id_categoria, id_marca, nombre) VALUES (%s, %s, %s)",
             (categoria_id[cat], marca_id[mar], prod))
+    def a_texto(v):
+        # pandas deja NaN en envase/variante cuando no hay texto; NaN es
+        # truthy en Python, asi que "v or None" lo dejaria pasar y MySQL lo rechaza
+        return None if v is None or (isinstance(v, float) and pd.isna(v)) or str(v).strip() == '' else str(v)
+
     presentacion_id = {}
     for r in presentaciones.itertuples(index=False):
         presentacion_id[r.clave_presentacion] = insertar_id(
@@ -152,7 +158,7 @@ def main():
             "VALUES (%s, %s, %s, %s, %s, %s)",
             (producto_id[(r.categoria, r.marca, r.producto)], unidad_id[r.unidad],
              None if pd.isna(r.cantidad) else float(r.cantidad),
-             r.envase or None, r.variante or None, r.descripcion_original))
+             a_texto(r.envase), a_texto(r.variante), r.descripcion_original))
     cur.executemany(
         "INSERT INTO presentacion_catalogo (id_presentacion, id_catalogo) VALUES (%s, %s)",
         [(presentacion_id[r.clave_presentacion], catalogo_id[r.catalogo])
