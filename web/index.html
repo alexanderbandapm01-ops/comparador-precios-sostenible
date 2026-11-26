@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CDPS — Comparador de Precios Sostenible · Querétaro</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header>
+  <img src="../docs/logo-cdps.png" alt="CDPS" class="logo" onerror="this.style.display='none'">
+  <div>
+    <h1>CDPS · Comparador de Precios Sostenible</h1>
+    <p>Datos · Mapas · Querétaro — Precios PROFECO (QQP) y huella de carbono estimada. ODS 12.</p>
+  </div>
+  <div id="auth-box">
+    <span id="auth-estado">Sin sesión</span>
+    <button id="btn-login">Entrar / Registrarme</button>
+    <button id="btn-salir" hidden>Salir</button>
+  </div>
+</header>
+
+<main>
+  <section class="card">
+    <h2>1 · Tu ubicación</h2>
+    <p>La recomendación usa tu ubicación para medir la distancia en línea recta a cada sucursal.</p>
+    <button id="btn-ubicacion">Usar mi ubicación</button>
+    <span id="ubicacion-texto">Aún no definida. También puedes escribir un código postal.</span>
+    <input id="input-cp" placeholder="Código postal (ej. 76000)" maxlength="5">
+    <button id="btn-cp">Usar CP</button>
+  </section>
+
+  <section class="card">
+    <h2>2 · Buscar productos</h2>
+    <input id="input-q" placeholder="Ej. arroz, aceite, huevo…">
+    <select id="select-categoria"><option value="">Todas las categorías</option></select>
+    <button id="btn-buscar">Buscar</button>
+    <div id="resultados"></div>
+    <div id="detalle"></div>
+  </section>
+
+  <section class="card">
+    <h2>3 · Sucursales cercanas</h2>
+    <div id="mapa"></div>
+    <button id="btn-cercanas">Ver sucursales en el mapa</button>
+    <ul id="lista-cercanas"></ul>
+  </section>
+
+  <section class="card">
+    <h2>4 · Mi lista y recomendación</h2>
+    <p><strong>Una sucursal por lista:</strong> la API recomienda la tienda donde conviene
+    comprar toda la lista (la que cubre más productos y gana por ahorro, huella o balance).
+    Debajo verás las otras sucursales comparadas.</p>
+    <input id="input-lista" placeholder="Nombre de la lista (ej. Despensa)">
+    <button id="btn-crear-lista">Crear lista</button>
+    <select id="select-lista"></select>
+    <div id="items-lista"></div>
+    <label>Modo
+      <select id="select-modo">
+        <option value="balance">Balance (50% costo · 50% huella)</option>
+        <option value="ahorro">Ahorro</option>
+        <option value="ecologico">Ecológico</option>
+      </select>
+    </label>
+    <label>Transporte <select id="select-transporte"></select></label>
+    <label>Radio (km) <input id="input-radio" type="number" value="5" min="1" max="100"></label>
+    <button id="btn-recomendar">Recomendar dónde comprar</button>
+    <div id="recomendacion"></div>
+  </section>
+
+  <dialog id="dlg-auth">
+    <form method="dialog" id="form-auth">
+      <h3>Entrar o registrarme</h3>
+      <p>Las cuentas son ficticias: usa un correo de prueba.</p>
+      <input name="nombre" placeholder="Nombre">
+      <input name="apellido_paterno" placeholder="Apellido paterno">
+      <input name="email" type="email" placeholder="correo@ejemplo.mx" required>
+      <input name="contrasena" type="password" placeholder="Contraseña (mín. 8)" required minlength="8">
+      <input name="id_municipio" type="number" placeholder="ID municipio (ej. 1)" required>
+      <input name="fecha_nacimiento" type="date" value="2000-06-15" required>
+      <button value="registro">Registrarme</button>
+      <button value="login">Ya tengo cuenta: entrar</button>
+      <button value="cancelar">Cancelar</button>
+      <p id="auth-error"></p>
+    </form>
+  </dialog>
+</main>
+
+<footer>CDPS · Datos: PROFECO, Quién es Quién en los Precios (ene–feb 2026). La huella es una estimación y se avisa cuando es parcial. Distancia en línea recta.</footer>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

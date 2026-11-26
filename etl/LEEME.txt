@@ -1,0 +1,79 @@
+LIMPIEZA Y CARGA DE LOS DATOS DE QQP (PROFECO)
+==============================================
+
+Estructura de carpetas esperada:
+
+    proyecto/
+        datos/      <- aqui van los 3 CSV originales (01-2026_Q1.csv, 01-2026_Q2.csv, 02-2026_Q1.csv)
+        etl/        <- estos archivos
+        salida/     <- se crea sola (archivos limpios y reportes)
+
+Si tus CSV estan en otra carpeta, usa --datos con la ruta.
+
+PASOS
+
+1) Instalar las librerias (una sola vez):
+       pip install -r requirements.txt
+
+2) Crear la base de datos: ejecutar en Workbench el script
+   comparador_precios_sostenible_sin_comentarios.sql (MySQL 8.0).
+
+3) Limpiar los datos:
+       python 01_limpiar.py
+   Opciones:
+       --incluir-tal-vez     incluye las categorias marcadas como tal_vez
+       --datos RUTA          carpeta con los CSV
+       --salida RUTA         carpeta de salida
+
+4) Revisar la carpeta salida/reportes antes de cargar:
+       resumen_limpieza.txt                       cuantas filas se descartaron y por que
+       direcciones_incompletas.csv                direcciones sin colonia o sin codigo postal
+       presentaciones_sin_interpretar.csv         presentaciones con unidad N/A (agregar reglas si son muchas)
+       unidades_encontradas.csv                   unidades reconocidas
+       conflictos_sucursal.csv                    sucursales con datos distintos en distintas filas
+       precios_repetidos_con_precio_distinto.csv  precios que se promediaron
+       categorias_tal_vez.csv                     productos de las categorias tal_vez (para decidir si se incluyen)
+       coordenadas_corregidas.csv                 sucursales a las que se les corrigio el signo de la latitud o la longitud
+
+5) Cargar a MySQL:
+       python 02_cargar.py
+   Pide la contrasena de MySQL. Tambien se pueden usar las variables de entorno
+   DB_HOST, DB_PORT, DB_USER, DB_PASSWORD y DB_NAME.
+   Si la base ya tiene datos, se niega a cargar. Para borrar y volver a cargar:
+       python 02_cargar.py --reiniciar
+   (pide escribir SI; borra productos, sucursales y precios, no los usuarios ni las listas).
+
+6) Cargar los factores de CO2 (cuando el equipo los tenga con su fuente):
+       python 03_cargar_factores.py
+   Lee factores_transporte.csv, la columna kgco2e_por_kg de mapeo_huella.csv y, si existe,
+   factores_producto.csv (un factor por producto, que tiene prioridad). Solo carga las filas
+   que tienen un numero; avisa de las que faltan. Reemplaza todo lo anterior de factor_emision_producto.
+   En mapeo_huella.csv, kg_por_pieza y densidad_kg_por_l son supuestos para convertir a kilos
+   (por ejemplo, huevo vendido por pieza): la API los usa y avisa cuando supone una densidad.
+
+ALCANCE
+
+El alcance se define en mapeo_huella.csv, columna en_alcance:
+    si        se carga
+    no        no se carga
+    tal_vez   no se carga, salvo que se use --incluir-tal-vez
+Hoy: 29 categorias en si (incluye Productos de Temporada), 2 en tal_vez (Cerveza y
+Vinos y Licores) y 11 en no.
+Para ampliar o reducir el alcance, se edita ese archivo y se vuelve a ejecutar.
+
+REGLAS DE LIMPIEZA
+
+- Se descartan las filas con algun campo vacio, precio menor o igual a cero,
+  fecha invalida o coordenadas invalidas.
+- La direccion se separa en calle, colonia y codigo postal. Si no se puede, la colonia
+  queda como "Sin dato" y el codigo postal como "00000". Un codigo postal de 4 digitos
+  se completa con un cero a la izquierda (6500 -> 06500).
+- Si una coordenada tiene el signo invertido (latitud negativa o longitud positiva) y al
+  invertirlo cae dentro de Mexico, se corrige y se anota en coordenadas_corregidas.csv.
+- La presentacion se separa en envase, cantidad, unidad y variante. Un texto que es solo
+  una unidad (por ejemplo "Kilo") se interpreta como 1 de esa unidad. Tambien se
+  interpretan: "Paquete C/18 Blanco" (18 piezas), "Paquete con 2 Pinguinos (80 Gr.)"
+  (80 Gr), "Caja con 25 Sobres" (25 piezas), "Pieza. Romana" y "Manojo" (1 pieza).
+  Lo que no se entiende queda con unidad N/A y cantidad vacia.
+- Si hay varios precios para la misma presentacion, sucursal, archivo y fecha, se guarda el promedio.
+- El periodo de cada archivo se toma de sus fechas, por ejemplo 2026-01-02/2026-01-15.

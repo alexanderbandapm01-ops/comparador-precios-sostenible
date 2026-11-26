@@ -1,0 +1,74 @@
+API DEL COMPARADOR DE PRECIOS SOSTENIBLE
+========================================
+
+Estructura (todo se ejecuta desde la carpeta "proyecto", la que contiene api/):
+
+    proyecto/
+        api/            main.py, config.py, db.py, seguridad.py, esquemas.py, routers/, servicios/
+        tests/          test_api.py
+        etl/            limpieza y carga de datos
+        web/            (opcional) la pagina; si existe, la API la sirve en la raiz
+
+1) Instalar las librerias (una vez):
+       pip install -r api/requirements.txt
+
+2) Variables de entorno (en PowerShell; duran lo que dure la ventana):
+       $env:DB_PASSWORD = "la contrasena de MySQL"
+       $env:JWT_SECRET  = "una cadena larga y aleatoria"
+   Para generar el secreto:
+       python -c "import secrets; print(secrets.token_urlsafe(48))"
+   Opcionales: DB_HOST, DB_PORT, DB_USER, DB_NAME, JWT_MINUTOS, CORS_ORIGENES, MAPEO_HUELLA
+
+3) Arrancar:
+       uvicorn api.main:app --reload
+   Documentacion interactiva (para probar cada endpoint): http://127.0.0.1:8000/docs
+
+4) Probar (usa la base cargada y crea y borra usuarios ficticios):
+       python -m pytest -q tests
+
+ENDPOINTS
+
+Estado y catalogos
+    GET  /salud
+    GET  /estados, /municipios?id_estado=, /categorias, /catalogos, /medios-transporte
+
+Cuenta
+    POST /auth/registro            crea la cuenta y devuelve un token
+    POST /auth/login               devuelve un token
+    GET  /auth/yo                  datos del usuario (con la edad calculada)
+    PUT  /auth/ubicacion           guarda la ubicacion (dentro de Mexico)
+    DELETE /auth/ubicacion
+
+Productos y precios
+    GET  /presentaciones?q=&categoria=&catalogo=&pagina=&por_pagina=
+    GET  /presentaciones/{id}
+    GET  /presentaciones/{id}/precios?id_municipio=&id_cadena=     precio mas reciente por sucursal
+    GET  /presentaciones/{id}/historico                            precio por fecha
+    GET  /presentaciones/{id}/alternativas                         precio por kg, L o pieza
+    GET  /sucursales/cercanas?latitud=&longitud=&codigo_postal=&id_municipio=&radio_km=
+
+Listas (requieren token: encabezado  Authorization: Bearer <token>)
+    POST /listas                   GET /listas
+    GET  /listas/{id}              PUT /listas/{id}            DELETE /listas/{id}
+    POST /listas/{id}/items        PUT /listas/{id}/items/{id_item}     DELETE /listas/{id}/items/{id_item}
+    POST /listas/{id}/recomendar   GET /listas/{id}/recomendaciones
+
+UBICACION DEL USUARIO (en este orden)
+    1. latitud y longitud enviadas (la del dispositivo o un punto del mapa)
+    2. la ubicacion guardada del usuario
+    3. el centro de las sucursales de su codigo postal (si hay al menos 3)
+    4. el centro de las sucursales de su municipio
+La pagina debe pedir la ubicacion al navegador (necesita HTTPS) y enviarla.
+
+RECOMENDACION (POST /listas/{id}/recomendar)
+    modo: "ahorro", "ecologico" o "balance" (50 % costo y 50 % huella)
+    El traslado se calcula una sola vez (ida y vuelta) y se reparte por partes iguales entre los
+    productos que cubre la sucursal elegida.
+    Los factores de CO2 se cargan con etl/03_cargar_factores.py. Si falta un factor, la huella sale
+    parcial y la respuesta lo avisa en "avisos" y en "huella_completa".
+
+SEGURIDAD
+    - Las contrasenas se guardan con bcrypt; nunca se devuelven.
+    - Todas las consultas usan parametros (no se arma SQL con texto del usuario).
+    - Cada lista solo la ve su dueno.
+    - Falta (para un sitio real): limitar intentos de login y usar HTTPS en el VPS.

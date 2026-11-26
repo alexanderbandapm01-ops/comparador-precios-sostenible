@@ -1,0 +1,5 @@
+nombre,factor_kgco2_km,fuente
+Auto,,
+Transporte publico,,
+Bicicleta,0,Emisiones directas nulas (no incluye ciclo de vida)
+A pie,0,Emisiones directas nulas
