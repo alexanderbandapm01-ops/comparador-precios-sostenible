@@ -15,6 +15,10 @@ DB_SOCKET = os.getenv('DB_SOCKET')
 JWT_SECRET = os.getenv('JWT_SECRET')
 JWT_MINUTOS = int(os.getenv('JWT_MINUTOS', '120'))
 
+# Client ID publico de Google para "Entrar con Google" (no es un secreto:
+# tambien va en la pagina). Vacio = el boton no se muestra.
+GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID', '')
+
 # Origenes permitidos si la pagina se sirve desde otro dominio, separados por coma
 CORS_ORIGENES = [o.strip() for o in os.getenv('CORS_ORIGENES', '').split(',') if o.strip()]
 

@@ -38,6 +38,20 @@ class LoginIn(BaseModel):
     contrasena: str = Field(max_length=72)
 
 
+class GoogleIn(BaseModel):
+    """Token de Google (GIS) y, solo para cuentas nuevas, los datos que Google no da."""
+    id_token: str = Field(min_length=1)
+    fecha_nacimiento: Optional[date] = None
+    id_municipio: Optional[int] = None
+
+    @field_validator('fecha_nacimiento')
+    @classmethod
+    def _fecha_razonable(cls, v):
+        if v is not None and (v > date.today() or v.year < 1900):
+            raise ValueError('Fecha de nacimiento no valida')
+        return v
+
+
 class UbicacionIn(BaseModel):
     latitud: float
     longitud: float

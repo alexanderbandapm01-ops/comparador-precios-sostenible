@@ -64,18 +64,82 @@ async function cargarMunicipios() {
 }
 $("select-estado").onchange = cargarMunicipios;
 
-$("btn-login").onclick = () => { $("auth-error").textContent = ""; cargarEstados(); $("dlg-auth").showModal(); };
+// Entrar con Google (solo si el servidor tiene Client ID configurado)
+let googleToken = "";
+let googleListo = false;
+async function cargarGoogle() {
+  if (googleListo) return;
+  try {
+    const cfg = await api("/auth/google-config");
+    if (!cfg.client_id) return; // Google no configurado: no se muestra el boton
+    await new Promise((res, rej) => {
+      const s = document.createElement("script");
+      s.src = "https://accounts.google.com/gsi/client";
+      s.onload = res; s.onerror = rej;
+      document.head.appendChild(s);
+    });
+    google.accounts.id.initialize({ client_id: cfg.client_id, callback: onGoogle });
+    google.accounts.id.renderButton($("google-btn"),
+      { theme: "outline", size: "large", text: "signin_with", locale: "es" });
+    googleListo = true;
+  } catch { /* sin Google, el login normal sigue funcionando */ }
+}
+async function onGoogle(respuesta) {
+  try {
+    const r = await api("/auth/google", { method: "POST", headers: headers(),
+      body: JSON.stringify({ id_token: respuesta.credential }) });
+    if (r.registro_incompleto) {
+      // Cuenta nueva: Google da nombre y correo; faltan fecha de nacimiento y municipio
+      googleToken = respuesta.credential;
+      const f = $("form-auth");
+      f.nombre.value = r.nombre || "";
+      f.apellido_paterno.value = r.apellido_paterno || "";
+      f.email.value = r.email || "";
+      f.contrasena.required = false; f.contrasena.hidden = true;
+      document.querySelector('#form-auth button[value="registro"]').textContent = "Completar registro con Google";
+      $("auth-error").textContent = "Casi listo: elige tu municipio y tu fecha de nacimiento para completar tu cuenta.";
+      return;
+    }
+    entrarConToken(r.token);
+  } catch (err) { $("auth-error").textContent = "Error: " + err.message; }
+}
+function entrarConToken(nuevoToken) {
+  token = nuevoToken;
+  localStorage.setItem("cdps_token", token);
+  restablecerFormAuth();
+  $("dlg-auth").close(); refrescarAuth(); cargarListas();
+}
+function restablecerFormAuth() {
+  googleToken = "";
+  const f = $("form-auth");
+  f.contrasena.required = true; f.contrasena.hidden = false;
+  document.querySelector('#form-auth button[value="registro"]').textContent = "Registrarme";
+}
+
+$("btn-login").onclick = () => { $("auth-error").textContent = ""; cargarEstados(); $("dlg-auth").showModal(); cargarGoogle(); };
 $("btn-salir").onclick = () => { token = ""; localStorage.removeItem("cdps_token"); refrescarAuth(); };
 $("form-auth").addEventListener("click", async (e) => {
   const accion = e.target.value;
   if (!accion) return;
-  if (accion === "cancelar") { $("dlg-auth").close(); return; }
+  if (accion === "cancelar") { restablecerFormAuth(); $("dlg-auth").close(); return; }
   const f = new FormData($("form-auth"));
   if (accion === "registro" && !f.get("id_municipio")) {
     $("auth-error").textContent = "Error: elige tu estado y tu municipio.";
     return;
   }
   try {
+    if (accion === "registro" && googleToken) {
+      // Cuenta nueva con Google: completar con fecha de nacimiento y municipio
+      if (!f.get("fecha_nacimiento")) {
+        $("auth-error").textContent = "Error: elige tu fecha de nacimiento.";
+        return;
+      }
+      const r = await api("/auth/google", { method: "POST", headers: headers(),
+        body: JSON.stringify({ id_token: googleToken, fecha_nacimiento: f.get("fecha_nacimiento"),
+          id_municipio: Number(f.get("id_municipio")) }) });
+      entrarConToken(r.token);
+      return;
+    }
     if (accion === "registro") {
       const cuerpo = { nombre: f.get("nombre") || "Usuario", apellido_paterno: f.get("apellido_paterno") || "Prueba",
         fecha_nacimiento: f.get("fecha_nacimiento"), email: f.get("email"), contrasena: f.get("contrasena"),
@@ -83,14 +147,12 @@ $("form-auth").addEventListener("click", async (e) => {
       if (f.get("apellido_materno")) cuerpo.apellido_materno = f.get("apellido_materno");
       if (ubic.lat) { cuerpo.latitud = ubic.lat; cuerpo.longitud = ubic.lon; }
       const r = await api("/auth/registro", { method: "POST", headers: headers(), body: JSON.stringify(cuerpo) });
-      token = r.token;
+      entrarConToken(r.token);
     } else {
       const r = await api("/auth/login", { method: "POST", headers: headers(),
         body: JSON.stringify({ email: f.get("email"), contrasena: f.get("contrasena") }) });
-      token = r.token;
+      entrarConToken(r.token);
     }
-    localStorage.setItem("cdps_token", token);
-    $("dlg-auth").close(); refrescarAuth(); cargarListas();
   } catch (err) { $("auth-error").textContent = "Error: " + err.message; }
 });
 

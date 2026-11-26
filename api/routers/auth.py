@@ -1,11 +1,13 @@
 """Registro, inicio de sesion y ubicacion del usuario."""
+import secrets
 from datetime import date
 
 import pymysql
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 
+from .. import config
 from ..db import obtener_db
-from ..esquemas import LoginIn, RegistroIn, UbicacionIn
+from ..esquemas import GoogleIn, LoginIn, RegistroIn, UbicacionIn
 from ..seguridad import crear_token, hashear, usuario_actual, verificar
 from ..servicios.geo import validar_coordenadas, wkt_punto
 from ..servicios.limitador import LIMITE_CORREO, LIMITE_IP, ip_cliente, limpiar, registrar_fallo, revisar
@@ -65,6 +67,61 @@ def login(datos: LoginIn, peticion: Request, db=Depends(obtener_db)):
     limpiar(f'correo:{correo}')
     limpiar(f'ip:{ip}')
     return {'id_usuario': fila['id_usuario'], 'token': crear_token(fila['id_usuario'])}
+
+
+@router.get('/google-config')
+def google_config():
+    """Client ID publico para el boton de Google (nulo si no esta configurado)."""
+    return {'client_id': config.GOOGLE_CLIENT_ID or None}
+
+
+@router.post('/google')
+def login_google(datos: GoogleIn, respuesta: Response, db=Depends(obtener_db)):
+    """Entrar con Google: verifica el token y crea o enlaza la cuenta por correo.
+
+    Google da nombre y correo verificado, pero el proyecto tambien pide fecha de
+    nacimiento y municipio: si la cuenta es nueva y faltan esos datos, se responde
+    registro_incompleto para que el usuario los complete una sola vez.
+    """
+    if not config.GOOGLE_CLIENT_ID:
+        raise HTTPException(503, 'El inicio con Google no esta configurado en el servidor')
+    try:
+        from google.auth import exceptions as google_exceptions
+        from google.auth.transport import requests as google_requests
+        from google.oauth2 import id_token as google_id_token
+    except ImportError:
+        raise HTTPException(503, 'Falta instalar google-auth en el servidor')
+    try:
+        info = google_id_token.verify_oauth2_token(
+            datos.id_token, google_requests.Request(), config.GOOGLE_CLIENT_ID)
+    except (ValueError, google_exceptions.GoogleAuthError):
+        raise HTTPException(401, 'El token de Google no es valido')
+    email = (info.get('email') or '').lower()
+    if not email or not info.get('email_verified'):
+        raise HTTPException(401, 'Google no confirmo el correo')
+    nombre = (info.get('given_name') or info.get('name') or 'Usuario')[:100]
+    apellido = (info.get('family_name') or '')[:100]
+    with db.cursor() as cur:
+        cur.execute('SELECT id_usuario FROM usuario WHERE email = %s', (email,))
+        fila = cur.fetchone()
+    if fila:
+        return {'id_usuario': fila['id_usuario'], 'token': crear_token(fila['id_usuario'])}
+    if not datos.fecha_nacimiento or not datos.id_municipio:
+        return {'registro_incompleto': True, 'nombre': nombre, 'apellido_paterno': apellido, 'email': email}
+    with db.cursor() as cur:
+        cur.execute('SELECT 1 FROM municipio WHERE id_municipio = %s', (datos.id_municipio,))
+        if not cur.fetchone():
+            raise HTTPException(422, 'El municipio no existe')
+        # Contrasena inutilizable: esta cuenta solo entra con Google
+        cur.execute(
+            'INSERT INTO usuario (nombre, apellido_paterno, fecha_nacimiento, email, contrasena_hash, id_municipio) '
+            'VALUES (%s, %s, %s, %s, %s, %s)',
+            (nombre, apellido or 'Sin apellido', datos.fecha_nacimiento, email,
+             hashear(secrets.token_hex(32)), datos.id_municipio))
+        id_usuario = cur.lastrowid
+    db.commit()
+    respuesta.status_code = 201
+    return {'id_usuario': id_usuario, 'token': crear_token(id_usuario)}
 
 
 @router.get('/yo')

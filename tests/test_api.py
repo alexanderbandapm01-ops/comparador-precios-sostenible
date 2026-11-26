@@ -285,3 +285,20 @@ def test_limite_de_intentos_de_login(base):
     limpiar_todo()
     ok = cliente.post('/auth/login', json={'email': correo, 'contrasena': 'clave-de-prueba-1'})
     assert ok.status_code == 200 and ok.json()['token']
+
+
+def test_google_config():
+    r = cliente.get('/auth/google-config')
+    assert r.status_code == 200 and r.json() == {'client_id': None}
+
+
+def test_google_sin_configurar():
+    r = cliente.post('/auth/google', json={'id_token': 'falso'})
+    assert r.status_code == 503
+
+
+def test_google_token_invalido(monkeypatch):
+    import api.config as config
+    monkeypatch.setattr(config, 'GOOGLE_CLIENT_ID', '123-falso.apps.googleusercontent.com')
+    r = cliente.post('/auth/google', json={'id_token': 'falso'})
+    assert r.status_code == 401
